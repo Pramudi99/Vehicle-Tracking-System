@@ -25,6 +25,9 @@ namespace Vehicle_Tracking_System.Services
             }
         }
 
+
+
+
         public async Task<Vehicles?> GetVehicleByNumberAsync(string vehicleNumber)
         {
             try
@@ -39,6 +42,9 @@ namespace Vehicle_Tracking_System.Services
                 throw new Exception($"Error retrieving vehicle {vehicleNumber}: {ex.Message}", ex);
             }
         }
+
+
+
 
         public async Task<Vehicles> CreateVehicleAsync(Vehicles vehicle)
         {
@@ -63,6 +69,8 @@ namespace Vehicle_Tracking_System.Services
             }
         }
 
+
+
         public async Task<bool> UpdateVehicleAsync(string vehicleNumber, Vehicles vehicle)
         {
             try
@@ -75,7 +83,7 @@ namespace Vehicle_Tracking_System.Services
                     return false;
 
                 // Update properties
-                existingVehicle.DriverName = vehicle.DriverName;
+               
                 // Add other properties as needed
 
                 _context.Vehicles.Update(existingVehicle);
