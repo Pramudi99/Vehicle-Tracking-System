@@ -28,7 +28,22 @@ builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Define CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost5173",
+        builder => builder
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
+
 var app = builder.Build();
+
+app.UseCors("AllowLocalhost5173");
+app.UseRouting();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

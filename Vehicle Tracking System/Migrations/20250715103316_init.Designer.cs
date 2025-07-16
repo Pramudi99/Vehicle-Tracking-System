@@ -12,8 +12,8 @@ using Vehicle_Tracking_System.Controllers.Data;
 namespace Vehicle_Tracking_System.Migrations
 {
     [DbContext(typeof(VehicleTrackingContext))]
-    [Migration("20250707073917_changingDatabase")]
-    partial class changingDatabase
+    [Migration("20250715103316_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -115,7 +115,10 @@ namespace Vehicle_Tracking_System.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("VehicleDriverId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VehicleDriverId"));
 
                     b.HasKey("VehicleId", "DriverId");
 
@@ -200,9 +203,6 @@ namespace Vehicle_Tracking_System.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("CurrentStatus")
-                        .HasColumnType("bit");
 
                     b.Property<string>("FuelType")
                         .IsRequired()

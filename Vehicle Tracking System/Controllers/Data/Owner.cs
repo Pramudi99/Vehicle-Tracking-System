@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Vehicle_Tracking_System.Controllers.Data
 {
     public class Owner
     {
         [Key]
-        public int OwnerId { get; set; }
-        public int VehicleId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int? OwnerId { get; set; }
         public string OwnerName { get; set; }
         public string OwnerNic {  get; set; }
         public string OwnerPhone { get; set; }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vehicle_Tracking_System.Controllers.Data;
+using Vehicle_Tracking_System.DTO;
 
 namespace Vehicle_Tracking_System.Services
 {
@@ -12,21 +13,122 @@ namespace Vehicle_Tracking_System.Services
             _context = context;
         }
 
+        public async Task<Vehicles> CreateVehicleAsync(CreateVehicleDto vehicleDto)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                Owner owner;
+
+                // Check if owner already exists by NIC (unique identifier)
+                var existingOwner = await _context.Owners
+                    .FirstOrDefaultAsync(o => o.OwnerNic == vehicleDto.Owner.OwnerNic);
+
+                if (existingOwner != null)
+                {
+                    // Use existing owner
+                    owner = existingOwner;
+                }
+                else
+                {
+                    // Create new owner
+                    owner = new Owner
+                    {
+                        OwnerName = vehicleDto.Owner.OwnerName,
+                        OwnerNic = vehicleDto.Owner.OwnerNic,
+                        OwnerPhone = vehicleDto.Owner.OwnerPhone
+                    };
+
+                    _context.Owners.Add(owner);
+                    await _context.SaveChangesAsync(); // Save to get the OwnerId
+                }
+
+                // Create the vehicle
+                var vehicle = new Vehicles
+                {
+                    VehicleNumber = vehicleDto.VehicleNumber,
+                    Capacity = vehicleDto.Capacity,
+                    FuelType = vehicleDto.FuelType,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow,
+                    OwnerId = owner.OwnerId.Value, // Use the owner's ID
+                    VehicleDriver = new List<VehicleDriver>()
+                };
+
+                // Handle drivers if provided
+                if (vehicleDto.VehicleDriver?.Any() == true)
+                {
+                    foreach (var driverDto in vehicleDto.VehicleDriver)
+                    {
+                        Driver driver;
+
+                        // Check if driver already exists by NIC
+                        var existingDriver = await _context.Drivers
+                            .FirstOrDefaultAsync(d => d.DriverNic == driverDto.Driver.DriverNic);
+
+                        if (existingDriver != null)
+                        {
+                            driver = existingDriver;
+                        }
+                        else
+                        {
+                            // Create new driver
+                            driver = new Driver
+                            {
+                                DriverName = driverDto.Driver.DriverName,
+                                DriverNic = driverDto.Driver.DriverNic,
+                                DriverPhone = driverDto.Driver.DriverPhone,
+                                DriverPhoto = driverDto.Driver.DriverPhoto
+                            };
+
+                            _context.Drivers.Add(driver);
+                            await _context.SaveChangesAsync(); // Save to get the DriverId
+                        }
+
+                        // Create the vehicle-driver relationship
+                        var vehicleDriver = new VehicleDriver
+                        {
+                            Vehicle = vehicle,
+                            Driver = driver,
+                            AssignedDate = driverDto.AssignedDate,
+                            UnassignedDate = driverDto.UnassignedDate,
+                            IsActive = driverDto.IsActive
+                        };
+
+                        vehicle.VehicleDriver.Add(vehicleDriver);
+                    }
+                }
+
+                _context.Vehicles.Add(vehicle);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                // Return the created vehicle with all related data
+                return await GetVehicleByIdAsync(vehicle.VehicleId);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception($"Error creating vehicle: {ex.Message}", ex);
+            }
+        }
+
         public async Task<IEnumerable<Vehicles>> GetAllVehiclesAsync()
         {
             try
             {
-                return await _context.Vehicles.ToListAsync();
+                return await _context.Vehicles
+                   .Include(v => v.Owner)
+                   .Include(v => v.VehicleDriver)
+                       .ThenInclude(vd => vd.Driver)
+                   .ToListAsync();
             }
             catch (Exception ex)
             {
-                // Log the exception (add logging framework like Serilog/NLog)
                 throw new Exception($"Error retrieving vehicles: {ex.Message}", ex);
             }
         }
-
-
-
 
         public async Task<Vehicles?> GetVehicleByNumberAsync(string vehicleNumber)
         {
@@ -35,41 +137,17 @@ namespace Vehicle_Tracking_System.Services
                 if (string.IsNullOrWhiteSpace(vehicleNumber))
                     return null;
 
-                return await _context.Vehicles.FindAsync(vehicleNumber);
+                return await _context.Vehicles
+                                    .Include(v => v.Owner)
+                                    .Include(v => v.VehicleDriver)
+                                        .ThenInclude(vd => vd.Driver)
+                                    .FirstOrDefaultAsync(v => v.VehicleNumber == vehicleNumber);
             }
             catch (Exception ex)
             {
                 throw new Exception($"Error retrieving vehicle {vehicleNumber}: {ex.Message}", ex);
             }
         }
-
-
-
-
-        public async Task<Vehicles> CreateVehicleAsync(Vehicles vehicle)
-        {
-            try
-            {
-                if (vehicle == null)
-                    throw new ArgumentNullException(nameof(vehicle));
-
-                if (string.IsNullOrWhiteSpace(vehicle.VehicleNumber))
-                    throw new ArgumentException("Vehicle number is required");
-
-                if (await VehicleExistsAsync(vehicle.VehicleNumber))
-                    throw new InvalidOperationException($"Vehicle with number {vehicle.VehicleNumber} already exists");
-
-                _context.Vehicles.Add(vehicle);
-                await _context.SaveChangesAsync();
-                return vehicle;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error creating vehicle: {ex.Message}", ex);
-            }
-        }
-
-
 
         public async Task<bool> UpdateVehicleAsync(string vehicleNumber, Vehicles vehicle)
         {
@@ -78,13 +156,17 @@ namespace Vehicle_Tracking_System.Services
                 if (string.IsNullOrWhiteSpace(vehicleNumber) || vehicle == null)
                     return false;
 
-                var existingVehicle = await _context.Vehicles.FindAsync(vehicleNumber);
+                var existingVehicle = await _context.Vehicles
+                    .FirstOrDefaultAsync(v => v.VehicleNumber == vehicleNumber);
                 if (existingVehicle == null)
                     return false;
 
-                // Update properties
-               
-                // Add other properties as needed
+                // Update only the allowed properties
+                existingVehicle.VehicleNumber = vehicle.VehicleNumber;
+                existingVehicle.Capacity = vehicle.Capacity;
+                existingVehicle.FuelType = vehicle.FuelType;
+                existingVehicle.UpdatedDate = DateTime.UtcNow;
+                existingVehicle.OwnerId = vehicle.OwnerId;
 
                 _context.Vehicles.Update(existingVehicle);
                 var result = await _context.SaveChangesAsync();
@@ -103,7 +185,8 @@ namespace Vehicle_Tracking_System.Services
                 if (string.IsNullOrWhiteSpace(vehicleNumber))
                     return false;
 
-                var vehicle = await _context.Vehicles.FindAsync(vehicleNumber);
+                var vehicle = await _context.Vehicles
+                    .FirstOrDefaultAsync(v => v.VehicleNumber == vehicleNumber);
                 if (vehicle == null)
                     return false;
 
@@ -130,6 +213,15 @@ namespace Vehicle_Tracking_System.Services
             {
                 throw new Exception($"Error checking vehicle existence: {ex.Message}", ex);
             }
+        }
+
+        private async Task<Vehicles> GetVehicleByIdAsync(int vehicleId)
+        {
+            return await _context.Vehicles
+                .Include(v => v.Owner)
+                .Include(v => v.VehicleDriver)
+                    .ThenInclude(vd => vd.Driver)
+                .FirstOrDefaultAsync(v => v.VehicleId == vehicleId);
         }
     }
 }

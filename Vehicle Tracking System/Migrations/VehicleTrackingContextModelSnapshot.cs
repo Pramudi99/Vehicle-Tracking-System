@@ -86,9 +86,6 @@ namespace Vehicle_Tracking_System.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("VehicleId")
-                        .HasColumnType("int");
-
                     b.HasKey("OwnerId");
 
                     b.ToTable("Owners");
@@ -112,7 +109,10 @@ namespace Vehicle_Tracking_System.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("VehicleDriverId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VehicleDriverId"));
 
                     b.HasKey("VehicleId", "DriverId");
 
@@ -197,9 +197,6 @@ namespace Vehicle_Tracking_System.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("CurrentStatus")
-                        .HasColumnType("bit");
 
                     b.Property<string>("FuelType")
                         .IsRequired()

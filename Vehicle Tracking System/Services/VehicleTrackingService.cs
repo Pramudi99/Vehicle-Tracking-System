@@ -111,14 +111,12 @@ namespace Vehicle_Tracking_System.Services
                     VehicleNumber = v.VehicleNumber,
                     Capacity = v.Capacity,
                     FuelType = v.FuelType,
-                    CurrentStatus = v.VehicleStatus.CurrentStatus,
                     CurrentLocation = v.VehicleStatus.CurrentLocation,
                     LastUpdated = v.VehicleStatus.LastUpdated,
                     Drivers = v.VehicleDriver
                         .Where(vd => vd.IsActive)
                         .Select(vd => new DriverDto
                         {
-                            DriverId = vd.Driver.DriverId,
                             DriverName = vd.Driver.DriverName,
                             DriverPhone = vd.Driver.DriverPhone,
                             DriverPhoto = vd.Driver.DriverPhoto,
@@ -126,7 +124,6 @@ namespace Vehicle_Tracking_System.Services
                         }).ToList(),
                     Owner = new OwnerDto
                     {
-                        OwnerId = v.Owner.OwnerId,
                         OwnerName = v.Owner.OwnerName,
                         OwnerPhone = v.Owner.OwnerPhone,
                         OwnerNic = v.Owner.OwnerNic

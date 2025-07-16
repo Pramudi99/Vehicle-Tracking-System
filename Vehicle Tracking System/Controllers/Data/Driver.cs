@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Vehicle_Tracking_System.Controllers.Data
 {
     public class Driver
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int DriverId {  get; set; }
         public string DriverName { get; set; }
         public string DriverPhoto {  get; set; }

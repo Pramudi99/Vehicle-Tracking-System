@@ -9,14 +9,13 @@ namespace Vehicle_Tracking_System.Controllers.Data
         public string VehicleNumber { get; set; }
         public int Capacity { get; set; }
         public string FuelType { get; set; }
-        public bool CurrentStatus { get; set; } //is active or not 
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
         
         public int OwnerId { get; set; } //foreignKey
 
         // Navigation property to Owner
-        public Owner Owner { get; set; }
+        public Owner? Owner { get; set; }
 
         public ICollection<VehicleTracking> VehicleTracking { get; set; }
 
