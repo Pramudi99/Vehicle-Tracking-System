@@ -9,6 +9,5 @@
         public string CurrentLocation { get; set; }
         public DateTime ArrivedAt { get; set; }
         public List<DriverDto> Drivers { get; set; } = new List<DriverDto>();
-        public List<OwnerDto> Owners { get; set; } = new List<OwnerDto>();
     }
 }

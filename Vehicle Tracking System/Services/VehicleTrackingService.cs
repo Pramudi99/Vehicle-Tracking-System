@@ -102,7 +102,7 @@ namespace Vehicle_Tracking_System.Services
                 .Where(v => v.VehicleId == vehicleId)
                 .Include(v => v.VehicleDriver)
                     .ThenInclude(vd => vd.Driver)
-                .Include(v => v.Owner)
+               
                 .Include(v => v.VehicleStatus)
                 .Include(v => v.VehicleTracking.OrderByDescending(vt => vt.Timestamp).Take(10))
                 .Select(v => new VehicleDetailsDto
@@ -122,12 +122,6 @@ namespace Vehicle_Tracking_System.Services
                             DriverPhoto = vd.Driver.DriverPhoto,
                             DriverNic = vd.Driver.DriverNic
                         }).ToList(),
-                    Owner = new OwnerDto
-                    {
-                        OwnerName = v.Owner.OwnerName,
-                        OwnerPhone = v.Owner.OwnerPhone,
-                        OwnerNic = v.Owner.OwnerNic
-                    },
                     RecentTrackingHistory = v.VehicleTracking
                         .Select(vt => new TrackingHistoryDto
                         {

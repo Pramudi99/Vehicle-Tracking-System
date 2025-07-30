@@ -8,8 +8,7 @@
         public string FuelType { get; set; }
         public string CurrentLocation { get; set; }
         public DateTime LastUpdated { get; set; }
-
-        public OwnerDto? Owner { get; set; }
+    
         public List<DriverDto> Drivers { get; set; } = new List<DriverDto>();
        
         public List<TrackingHistoryDto> RecentTrackingHistory { get; set; } = new List<TrackingHistoryDto>();
